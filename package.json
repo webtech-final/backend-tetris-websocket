@@ -1,0 +1,16 @@
+{
+  "name": "tetris-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "nataset <nataset.t@ku.th>",
+  "license": "MIT",
+  "scripts": {
+    "serve" : "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "randomstring": "^1.2.1",
+    "socket.io": "^4.2.0"
+  }
+}
