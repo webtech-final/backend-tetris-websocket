@@ -4,25 +4,27 @@ const app = require('express')();
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-        origin: 'http://localhost:8080',
-        methods: ['GET', 'POST'],
+        origin: '*',
     },
 });
 
 const clientRooms = {};
 
 io.on('connection', client => {
-    console.log(client.id);
-
     client.on('genGameCode', handleGenGameCode);
     client.on('newGame', handleNewGame);
     client.on('joinGame', handleJoinGame);
-    client.on('player1', (state) => {
+    client.on('gameOver', handleGameOver);
+    client.on('player1', state => {
         io.sockets.in(clientRooms[client.id]).emit('state1', state);
-    })
-    client.on('player2', (state) => {
+    });
+    client.on('player2', state => {
         io.sockets.in(clientRooms[client.id]).emit('state2', state);
-    })
+    });
+
+    function handleGameOver(playerNumber) {
+        io.sockets.in(clientRooms[client.id]).emit('gameOver', playerNumber);
+    }
 
     function handleGenGameCode() {
         let roomName = randomstring.generate(5);
@@ -41,8 +43,7 @@ io.on('connection', client => {
         const room = io.sockets.adapter.rooms.get(roomName);
 
         let numClients = 0;
-        if(room)
-            numClients = room.size;
+        if (room) numClients = room.size;
 
         if (numClients === 0) {
             client.emit('unknownCode');
@@ -56,13 +57,11 @@ io.on('connection', client => {
 
         client.join(roomName);
         client.number = 2;
-        client.emit('init', 2)
+        client.emit('init', 2);
+
+        io.sockets.in(clientRooms[client.id]).emit('startGame', true);
     }
 });
-
-io.on('disconnect', () => {
-    console.dir(clientRooms)
-})
 
 app.get('/', (req, res) => {
     res.send('socket.io server are runing');

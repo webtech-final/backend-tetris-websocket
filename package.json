@@ -5,7 +5,7 @@
   "author": "nataset <nataset.t@ku.th>",
   "license": "MIT",
   "scripts": {
-    "serve" : "nodemon server.js"
+    "serve" : "nodemon --delay 500ms server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
