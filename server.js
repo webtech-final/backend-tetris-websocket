@@ -22,8 +22,15 @@ io.on('connection', client => {
         io.sockets.in(clientRooms[client.id]).emit('state2', state);
     });
 
-    function handleGameOver(playerNumber) {
-        io.sockets.in(clientRooms[client.id]).emit('gameOver', playerNumber);
+    function handleGameOver(payLoad) {
+        const clients = io.sockets.adapter.rooms.get(clientRooms[client.id]);
+        for (const clientId of clients) {
+            const client = io.sockets.sockets.get(clientId);
+            client.number == payLoad.loserNumber
+                ? (payLoad.loserName = client.playerName)
+                : (payLoad.winnerName = client.playerName);
+        }
+        io.sockets.in(clientRooms[client.id]).emit('gameOver', payLoad);
     }
 
     function handleGenGameCode() {
@@ -31,35 +38,45 @@ io.on('connection', client => {
         client.emit('gameCode', roomName);
     }
 
-    function handleNewGame(roomName) {
-        clientRooms[client.id] = roomName;
+    function handleNewGame({ roomName, playerName }) {
+        if (playerName) {
+            clientRooms[client.id] = roomName;
 
-        client.join(roomName);
-        client.number = 1;
-        client.emit('init', 1);
+            client.join(roomName);
+            client.number = 1;
+            client.playerName = playerName;
+            client.emit('init', 1);
+        }
     }
 
-    function handleJoinGame(roomName) {
-        const room = io.sockets.adapter.rooms.get(roomName);
+    function handleJoinGame({ roomName, playerName }) {
+        if (playerName) {
+            let clientNumberOne;
+            const room = io.sockets.adapter.rooms.get(roomName);
+            for (const clientId of room) {
+                clientNumberOne = io.sockets.sockets.get(clientId);
+            }
 
-        let numClients = 0;
-        if (room) numClients = room.size;
+            let numClients = 0;
+            if (room) numClients = room.size;
 
-        if (numClients === 0) {
-            client.emit('unknownCode');
-            return;
-        } else if (numClients > 1) {
-            client.emit('tooManyPlayers');
-            return;
+            if (numClients === 0 || playerName == clientNumberOne.playerName) {
+                client.emit('unknownCode');
+                return;
+            } else if (numClients > 1) {
+                client.emit('tooManyPlayers');
+                return;
+            }
+
+            clientRooms[client.id] = roomName;
+
+            client.join(roomName);
+            client.number = 2;
+            client.playerName = playerName;
+            client.emit('init', 2);
+
+            io.sockets.in(clientRooms[client.id]).emit('startGame', true);
         }
-
-        clientRooms[client.id] = roomName;
-
-        client.join(roomName);
-        client.number = 2;
-        client.emit('init', 2);
-
-        io.sockets.in(clientRooms[client.id]).emit('startGame', true);
     }
 });
 
