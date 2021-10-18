@@ -15,11 +15,17 @@ io.on('connection', client => {
     client.on('newGame', handleNewGame);
     client.on('joinGame', handleJoinGame);
     client.on('gameOver', handleGameOver);
+
     client.on('player1', state => {
         io.sockets.in(clientRooms[client.id]).emit('state1', state);
     });
+
     client.on('player2', state => {
         io.sockets.in(clientRooms[client.id]).emit('state2', state);
+    });
+
+    client.on('message', msg => {
+        io.emit('new_message', msg);
     });
 
     function handleGameOver(payLoad) {
