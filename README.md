@@ -21,4 +21,4 @@ node server.js
 ```
 
 ### Test
-go to http://localhost:3000/
+go to http://localhost:{PORT}/
